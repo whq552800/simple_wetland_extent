@@ -31,7 +31,7 @@ class wetlands_extent(object):
     _EPS_V = 1e-12      # avoid division by zero in V
     _EPS_S = 1e-12      # min slope
     _EPS_H = 1e-8       # min depth [m]
-    _DF_MAX = 0.05      # max daily change in f_w (stability limiter)
+    _DF_MAX = 0.01      # max daily change in f_w (stability limiter)
 
     def __init__(self, model):
         self.var = model.var
@@ -57,10 +57,11 @@ class wetlands_extent(object):
 
         # ---- parameters (ideally read from ini/settings) ----
         # If you have getOption available, you can replace these three lines.
-        self.var.kappa = 1.0   # [0.5, 2]
-        self.var.z     = 0.35  # [0.3, 0.5]
-        self.var.c     = 0.1   # [0.05, 0.2]  (m^{1/3} s^{-1})
-
+        self.var.kappa   = float(cbinding('kappa'))
+        self.var.z_local = float(cbinding('z_local'))
+        self.var.z_river = float(cbinding('z_river'))
+        self.var.c    = float(cbinding('cwet'))
+        
         # ---- geometry ----
         self.var.A_gc = self.var.cellArea.astype(np.float64)   # [m2]
         self.var.s_range = (self.var.s_max - self.var.s_min).astype(np.float32)
@@ -147,17 +148,15 @@ class wetlands_extent(object):
 
         # Apply only on wetland area -> expressed as cell-mean depth [m/day]
         P_w  = P * f_eff
+        # P_w=0
         ET_w = ETref * f_eff
 
         # Lateral inflow: strictly in m/day (cell-mean depth)
-        # NOTE: you are currently using runoff as a proxy for I_gc (local water supply).
-        # If later you connect to routing inflow, replace I_gc with that variable.
-        if hasattr(self.var, "I_gc"):
-            I_gc = np.asarray(self.var.I_gc, dtype=np.float64)     # [m/day]
-        else:
-            I_gc = np.asarray(getattr(self.var, "runoff", 0.0), dtype=np.float64)  # [m/day], proxy
-
-        I_w = I_gc * np.power(f_eff, float(self.var.z))  # [m/day]
+        I_gc = np.asarray(getattr(self.var, "I_gc", 0.0), dtype=np.float64)  # [m/day], MUST be provided externally
+        I_local = np.asarray(getattr(self.var, "I_local", 0.0), dtype=np.float64)  # [m/day], MUST be provided externally
+        I_river = np.asarray(getattr(self.var, "I_river", 0.0), dtype=np.float64)  # [m/day], MUST be provided externally
+        # I_w = I_gc * np.power(f_eff, float(self.var.z))  # [m/day]
+        I_w = I_local * f_eff**self.var.z_local  +  I_river * f_eff**self.var.z_river
 
         # Lateral outflow:
         # v [m/s] using Manning-like form
@@ -174,11 +173,13 @@ class wetlands_extent(object):
         S_depth = V / self.var.A_gc                       # [m] (cell-mean storage depth)
         O_w = np.where(np.isfinite(k), S_depth * (DtSec / np.maximum(k, 1e-6)), 0.0)  # [m/day]
 
+        self.var.wet_in_m  = I_w.astype(np.float32)
+        self.var.wet_out_m = O_w.astype(np.float32)
         # Drainage (D_w): daily depth loss over cell
         # This is the only term not uniquely defined by the DWES paper in your current CWatM coupling.
         # Keep it minimal & explicit:
         #   D_w = alpha * h * f_w, where alpha is per-day drainage coefficient.
-        alpha_d = 0.05  # [1/day] placeholder; can be sensitivity-tested
+        alpha_d = 0.005  # [1/day] placeholder; can be sensitivity-tested
         D_w = alpha_d * h * f_eff  # [m/day]
 
         # ---------------- volume update (m3/day) ----------------
@@ -213,6 +214,6 @@ class wetlands_extent(object):
         self.var.V   = V_new.astype(np.float64)
 
         self.var.f_w = np.maximum(self.var.f_w, 0.0)
-
+        
         # self.var.runoff_conc = self.var.runoff_conc + O_w.astype(self.var.runoff_conc.dtype)
    
