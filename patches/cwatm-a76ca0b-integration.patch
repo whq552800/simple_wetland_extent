@@ -1,0 +1,98 @@
+diff --git a/cwatm/cwatm_dynamic.py b/cwatm/cwatm_dynamic.py
+index 50c5d7d..0971c74 100644
+--- a/cwatm/cwatm_dynamic.py
++++ b/cwatm/cwatm_dynamic.py
+@@ -215,12 +215,18 @@ class CWATModel_dyn(DynamicModel):
+             self.runoff_concentration_module.dynamic()
+             timemeasure("Runoff conc.")  # 8. timing
+ 
++            if self.var.includeWetlands:
++                self.wetlands_module.dynamic_local()
++
+             self.lakes_res_small_module.dynamic()
+             timemeasure("Small lakes")  # 9. timing
+ 
+             self.routing_kinematic_module.dynamic()
+             timemeasure("Routing_Kin")  # 10. timing
+ 
++            if self.var.includeWetlands:
++                self.wetlands_module.finalize()
++
+             self.waterquality1.dynamic()
+ 
+             # calculate Total water storage (tws) [m] as a sum of
+@@ -271,6 +277,12 @@ class CWATModel_dyn(DynamicModel):
+                 self.var.tws = self.var.tws + self.var.gridcell_storage
+                 self.var.tws_unmet = self.var.tws + self.var.gridcell_storage
+ 
++            if self.var.includeWetlands:
++                wetland_storage_m = self.var.wetlandStorage * self.var.InvCellArea
++                self.var.tws = self.var.tws + wetland_storage_m
++                if hasattr(self.var, 'tws_unmet'):
++                    self.var.tws_unmet = self.var.tws_unmet + wetland_storage_m
++
+ 
+             # ------------------------------------------------------
+             # End of calculation -----------------------------------
+diff --git a/cwatm/cwatm_initial.py b/cwatm/cwatm_initial.py
+index 85e284c..f0d478e 100644
+--- a/cwatm/cwatm_initial.py
++++ b/cwatm/cwatm_initial.py
+@@ -32,6 +32,7 @@ from cwatm.hydrological_modules.capillarRise import capillarRise
+ from cwatm.hydrological_modules.interception import interception
+ from cwatm.hydrological_modules.runoff_concentration import runoff_concentration
+ from cwatm.hydrological_modules.lakes_res_small import lakes_res_small
++from cwatm.hydrological_modules.wetlands import wetlands
+ from cwatm.hydrological_modules.environflow import environflow
+ from cwatm.hydrological_modules.routing_reservoirs.routing_kinematic import routing_kinematic
+ from cwatm.hydrological_modules.lakes_reservoirs import lakes_reservoirs
+@@ -283,6 +284,7 @@ class CWATModel_ini(DynamicModel):
+         self.sealed_water_module = sealed_water(self)
+         self.runoff_concentration_module = runoff_concentration(self)
+         self.lakes_res_small_module = lakes_res_small(self)
++        self.wetlands_module = wetlands(self)
+         self.routing_kinematic_module = routing_kinematic(self)
+         self.lakes_reservoirs_module = lakes_reservoirs(self)
+         self.waterquality1 = waterquality1(self)
+@@ -325,10 +327,12 @@ class CWATModel_ini(DynamicModel):
+ 
+         # routing must be before output and snow behind
+         self.routing_kinematic_module.initial()
++        self.wetlands_module.initial()
+         self.output_module.initial()
+         self.snowfrost_module.initial()
+ 
+         self.landcoverType_module.initial()
++        self.wetlands_module.constrain_open_water()
+         self.evaporation_module.initial()
+ 
+         self.runoff_concentration_module.initial()
+diff --git a/cwatm/hydrological_modules/initcondition.py b/cwatm/hydrological_modules/initcondition.py
+index 1d199b0..b9c5848 100644
+--- a/cwatm/hydrological_modules/initcondition.py
++++ b/cwatm/hydrological_modules/initcondition.py
+@@ -319,6 +319,10 @@ class initcondition(object):
+         initCondVar.append("FrostIndex")
+         initCondVarValue.append("FrostIndex")
+ 
++        if checkOption('includeWetlands', True):
++            initCondVar.append("wetlandStorage")
++            initCondVarValue.append("wetlandStorage")
++
+         if checkOption('includeRunoffConcentration'):
+             for i in range(10):
+                 initCondVar.append("runoff_conc" + str(i + 1))
+diff --git a/cwatm/hydrological_modules/routing_reservoirs/routing_kinematic.py b/cwatm/hydrological_modules/routing_reservoirs/routing_kinematic.py
+index ef981d4..d82120f 100644
+--- a/cwatm/hydrological_modules/routing_reservoirs/routing_kinematic.py
++++ b/cwatm/hydrological_modules/routing_reservoirs/routing_kinematic.py
+@@ -510,6 +510,9 @@ class routing_kinematic(object):
+             else:
+                 lakesResOut = 0
+ 
++            if self.var.includeWetlands:
++                sideflowChanM3 -= self.model.wetlands_module.dynamic_routing()
++
+             # sideflowChan = sideflowChanM3 * self.var.invchanLength * self.var.InvDtSec
+             sideflowChan = sideflowChanM3 * self.var.invchanLength * 1 / self.var.dtRouting
+ 

@@ -1,0 +1,13 @@
+This repository distributes modifications to CWatM (Community Water Model)
+under the GNU General Public License version 3 only.
+
+CWatM is developed by the International Institute for Applied Systems
+Analysis (IIASA) and contributors. The integration patch is based on
+upstream commit a76ca0b02a99e4a7dadfe1a14fe2ad0b9a282d6c.
+The wetland module and accompanying tools were developed in the
+CWatM-wetland-module working tree, source commit
+55cbb4ac06c06066557f4d8a2135712c6f15b41d.
+
+The dataset providers retain their own rights. Their raw datasets are
+not included in the current repository tree. The repository's preexisting
+DWES-like files are preserved only in the legacy Git tag/history.

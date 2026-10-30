@@ -1,0 +1,14 @@
+*.nc
+*.tif
+*.tiff
+*.zip
+*.npz
+*.npy
+*.log
+__pycache__/
+.pytest_cache/
+*.py[cod]
+runs/
+outputs/
+data/
+*.ini

@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this wetland extension, please cite this software and the original CWatM model."
+type: software
+title: "CWatM Dynamic Wetland Extent Module"
+version: "0.6.0"
+date-released: "2026-10-30"
+repository-code: "https://github.com/whq552800/simple_wetland_extent"
+license: "GPL-3.0-only"
+authors:
+  - name: "whq552800"
+keywords:
+  - wetlands
+  - hydrology
+  - CWatM
+  - wetland extent
+  - inundation
+references:
+  - type: article
+    title: "Development of the Community Water Model (CWatM v1.04) - a high-resolution hydrological model for global and regional assessment of integrated water resources management"
+    doi: "10.5194/gmd-13-3267-2020"
+    authors:
+      - name: "Burek et al."
