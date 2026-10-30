@@ -1,6 +1,0 @@
-numpy
-scipy
-netCDF4
-rasterio
-matplotlib
-pytest

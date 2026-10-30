@@ -12,3 +12,6 @@ runs/
 outputs/
 data/
 *.ini
+*.docx
+*.pdf
+*.png

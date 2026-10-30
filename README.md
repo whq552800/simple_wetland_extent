@@ -1,18 +1,17 @@
-# CWatM wetland module
+# CWatM wetland simulation and calibration code
 
-Wetland extension for CWatM (working-tree commit `55cbb4ac06c06066557f4d8a2135712c6f15b41d`). The previous `wetlands_extent.py` version is saved in tag `legacy-dwes-before-replacement-20261030`.
-
-| File | Contents |
+| File | Purpose |
 | --- | --- |
-| `cwatm/hydrological_modules/wetlands.py` | Wetland storage, runoff/river exchange, evaporation, and vegetated-saturation/surface-inundation diagnostics. |
-| `patches/cwatm-a76ca0b-integration.patch` | CWatM integration changes for upstream commit `a76ca0b02a99e4a7dadfe1a14fe2ad0b9a282d6c`. |
-| `tools/*.py` | Candidate-map preparation, run setup, parameter screening, output checks, evaluation, and plots. |
-| `tests/*.py` | Unit tests for the module and tools. |
-| `docs/INSTALL.md` | Installation and test commands. |
-| `docs/DATA.md` | Required input files and comparison datasets. |
-| `docs/RESULTS.md` | Key global 2000–2019 results and figures. |
-| `figures/*.png` | Spatial, scatter, and monthly comparison figures. |
-| `requirements-analysis.txt` | Python analysis/test dependencies. |
-| `CITATION.cff`, `LICENSE`, `NOTICE` | Citation, license, and CWatM attribution. |
+| `cwatm/hydrological_modules/wetlands.py` | Simulates wetland storage, runoff and river inflow, evaporation, outflow, and two wetland-area states. |
+| `patches/cwatm-a76ca0b-integration.patch` | Integrates the module into CWatM commit `a76ca0b02a99e4a7dadfe1a14fe2ad0b9a282d6c`. |
+| `tools/prepare_global_wetland_prior.py` | Builds the grid-aligned candidate wetland map from the fused classification and GLWD v2. |
+| `tools/wetland_type_sensitivity.py` | Generates alternative allocations of fused wetland class 17. |
+| `tools/prepare_global_wetland_run.py` | Creates global historical-run settings and an output directory. |
+| `tools/calibrate_wetlands.py` | Screens five wetland parameters and saves each candidate's settings, run log and WAD2M score. |
+| `tools/evaluate_wetland_wad2m.py` | Scores monthly simulated wetland area against WAD2M v2. |
+| `tools/evaluate_wetland_wad2m_stable.py` | Computes fixed-cell scores and within-cell monthly correlations. |
+| `tools/evaluate_wetland_elm_global.py` | Compares simulated wetland area with ELM-ECA model output. |
+| `tools/check_wetland_outputs.py` | Checks wetland storage and area constraints in model outputs. |
+| `LICENSE`, `NOTICE` | GPL license and CWatM attribution. |
 
-Cite this repository and CWatM (Burek et al., 2020, DOI: 10.5194/gmd-13-3267-2020).
+The earlier full repository version is available at tag `v0.6.0`.
